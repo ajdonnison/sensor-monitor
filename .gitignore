@@ -1,0 +1,5 @@
+netmonitor
+*.config
+*.cfg
+*.status
+*.log
