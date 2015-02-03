@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include "message.h"
 #include <fcntl.h>
+#include <signal.h>
 
 
 using namespace std;
@@ -80,25 +81,36 @@ write_status(int node, message_t *msg)
   ofile.close();
 }
 
+void roll_log(int sig)
+{
+  int outfd;
+  outfd = open("netmonitor.log",
+    O_WRONLY | O_APPEND | O_CREAT,
+    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
+  );
+  close(1);
+  close(2);
+  dup2(outfd, 1);
+  dup2(outfd, 2);
+  close(outfd);
+}
+
 int main(int argc, char** argv) 
 {
   message_t msg;
   struct stat st;
   bool startup = false;
+  struct sigaction newsig;
 
-  int outfd;
-  outfd = open("netmonitor.log",
-    O_WRONLY | O_APPEND|O_CREAT, 
-    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH
-  );
 
-  close(1);
-  dup(outfd);
-  close(2);
-  dup(outfd);
   close(0);
-  close(outfd);
+  roll_log(0);
+  
+  newsig.sa_handler = roll_log;
+  sigaction(SIGHUP, &newsig, NULL);
+
   daemon(1, 1);
+
 
   radio.begin();
   

@@ -2,4 +2,4 @@ netmonitor
 *.config
 *.cfg
 *.status
-*.log
+*.log*
