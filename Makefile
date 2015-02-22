@@ -1,7 +1,10 @@
 prefix := /usr/local
 
 # The recommended compiler flags for the Raspberry Pi
-CCFLAGS=-Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s
+CXXFLAGS=-Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s
+CPPFLAGS=-Wall -I../
+LDFLAGS=-lrf24-bcm -lrf24network
+CC=g++
 #CCFLAGS=
 
 # define all programs
@@ -10,8 +13,11 @@ SOURCES = ${PROGRAMS:=.cpp} message.h
 
 all: ${PROGRAMS}
 
-${PROGRAMS}: ${SOURCES}
-	g++ ${CCFLAGS} -Wall -I../ -lrf24-bcm -lrf24network $@.cpp -o $@
+netmonitor: sensorconfig.o netmonitor.o
+
+netmonitor.o: netmonitor.cpp message.h msgqueue.h sensorconfig.h
+
+sensorconfig.o: sensorconfig.h
 
 clean:
 	rm -rf $(PROGRAMS)

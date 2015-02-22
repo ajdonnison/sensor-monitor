@@ -3,3 +3,4 @@ netmonitor
 *.cfg
 *.status
 *.log*
+*.o
