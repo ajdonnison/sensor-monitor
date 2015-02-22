@@ -91,8 +91,8 @@ write_status(int node, message_t *msg)
   ostringstream ofs;
   ofs << "sensor." << node << ".status" << ends;
   ofstream ofile(ofs.str().c_str(), ios::out | ios::trunc);
-  ofile << "low_value " << msg->payload.sensor.value / 10.0 << endl;
-  ofile << "high_value " << msg->payload.sensor.value_2 / 10.0 << endl;
+  ofile << "test_value " << msg->payload.sensor.value / 10.0 << endl;
+  ofile << "reference " << msg->payload.sensor.value_2 / 10.0 << endl;
   ofile << "output_1 " << msg->payload.sensor.value_3 << endl;
   ofile << "output_2 " << msg->payload.sensor.value_4 << endl;
   ofile.close();
