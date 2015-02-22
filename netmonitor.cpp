@@ -125,7 +125,7 @@ handleMessage(void)
       cout << "Temp: " << msg.payload.sensor.value / 10.0
       << "C, " << msg.payload.sensor.value_2 / 10.0 << "C "
       << "LIGHT(" << (msg.payload.sensor.value_3 ? "ON" : "OFF")
-      << ") HEATER(" << (msg.payload.sensor.value_4 ? "ON" : "OFF")
+      << ") OUTPUT(" << (msg.payload.sensor.value_4 ? "ON" : "OFF")
       << ")" << endl;
       // Write out a sensor status file
       write_status(header.from_node, &msg);
