@@ -80,6 +80,8 @@ set_value_str(int node, string item, int value)
     set_value(node, 'r', value);
   } else if (item == "mode") {
     set_value(node, 'm', value);
+  } else if (item == "address") {
+    set_value(node, 'a', value);
   } else if (item == "time") {
     set_time(node);
   }
@@ -120,6 +122,7 @@ handleMessage(void)
   message_t msg;
 
   network.read(header,&msg,sizeof(msg));
+  cout << "N(" << header.from_node << ") ";
   switch (header.type) {
     case 's': // Sensor
       cout << "Temp: " << msg.payload.sensor.value / 10.0
@@ -284,7 +287,6 @@ int main(int argc, char** argv)
   bool startup = false;
   struct sigaction newsig;
 
-
   close(0);
   roll_log(0);
   
@@ -293,9 +295,7 @@ int main(int argc, char** argv)
 
   daemon(1, 1);
 
-
   radio.begin();
-  
   delay(5);
   network.begin(/*channel*/ 90, /*node address*/ this_node);
   radio.printDetails();
