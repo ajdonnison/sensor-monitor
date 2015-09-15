@@ -34,11 +34,7 @@ RF24Network network(radio);
 // Address of our node
 const uint16_t this_node = 0;
 
-const unsigned long interval = 2000; //ms  // How often to send 'hello world to the other unit
-
-unsigned long last_sent;             // When did we last send?
-unsigned long packets_sent;          // How many have we sent already
-int sensor_list[] = { 2, 3, -1 };    // This should be dynamic
+int sensor_list[] = { 2, 3, 5, -1 };    // This should be dynamic
 
 queue<MessageQueueItem> message_queue;
 
@@ -91,7 +87,7 @@ void
 write_status(int node, message_t *msg)
 {
   ostringstream ofs;
-  ofs << "sensor." << node << ".status" << ends;
+  ofs << "sensor." << setw(5) << setfill('0') << setbase(8) << node << ".status" << setbase(10) << ends;
   ofstream ofile(ofs.str().c_str(), ios::out | ios::trunc);
   ofile << "test_value " << msg->payload.sensor.value / 10.0 << endl;
   ofile << "reference " << msg->payload.sensor.value_2 / 10.0 << endl;
@@ -122,7 +118,7 @@ handleMessage(void)
   message_t msg;
 
   network.read(header,&msg,sizeof(msg));
-  cout << "N(" << header.from_node << ") ";
+  cout << setfill('0') << setbase(8) << setw(5) << header.from_node << ": " << setbase(10);
   switch (header.type) {
     case 's': // Sensor
       cout << "Temp: " << msg.payload.sensor.value / 10.0
@@ -278,7 +274,8 @@ sendPendingMessages(void)
   MessageQueueItem item = message_queue.front();
   RF24NetworkHeader hdr(item.get_id(), item.get_type());
   network.write(hdr, item.get_message(), item.get_size());
-  cout << "Sending to node " << item.get_id() << " type="  << item.get_type() << " msgtype=" << item.get_message()->payload.config.item << endl;
+  cout << "Sending to node " << setw(5) << setfill('0') << setbase(8) << item.get_id();
+  cout << setbase(10) << " type="  << item.get_type() << " msgtype=" << item.get_message()->payload.config.item << endl;
   message_queue.pop();
 }
 

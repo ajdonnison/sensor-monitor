@@ -14,7 +14,7 @@ SensorConfig::save(void)
   bool result = true;
   try {
     ostringstream ofs;
-    ofs << "sensor." << id << ".cfg" << ends;
+    ofs << "sensor." << setw(5) << setfill('0') << setbase(8) << id << ".cfg" << setbase(10) << ends;
     ofstream ofile(ofs.str().c_str(), ios::out | ios::trunc);
     ofile << "low_point " << low_point << endl;
     ofile << "high_point " << high_point << endl;
@@ -67,7 +67,7 @@ SensorConfig::load(void)
     int value;
 
     ostringstream ofs;
-    ofs << "sensor." << id << ".cfg" << ends;
+    ofs << "sensor." << setw(5) << setfill('0') << setbase(8) << id << ".cfg" << setbase(10) << ends;
     try {
       ifstream ifile(ofs.str().c_str());
       if (ifile.is_open()) {
