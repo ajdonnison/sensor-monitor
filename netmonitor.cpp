@@ -17,12 +17,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "message.h"
 #include "msgqueue.h"
 #include <fcntl.h>
 #include <signal.h>
 #include <queue>
 #include "sensorconfig.h"
+#include <glob.h>
 
 
 using namespace std;
@@ -34,7 +36,7 @@ RF24Network network(radio);
 // Address of our node
 const uint16_t this_node = 0;
 
-int sensor_list[] = { 2, 3, 5, -1 };    // This should be dynamic
+int sensor_list[100];
 
 queue<MessageQueueItem> message_queue;
 
@@ -94,6 +96,34 @@ write_status(int node, message_t *msg)
   ofile << "output_1 " << msg->payload.sensor.value_3 << endl;
   ofile << "output_2 " << msg->payload.sensor.value_4 << endl;
   ofile.close();
+}
+
+int
+convertPathToInt(char * path)
+{
+  char * begin;
+  char * end;
+  long interim;
+
+  begin = index(path, '.');
+  end = rindex(path, '.');
+  *end = '\0';
+  interim = strtol(++begin, NULL, 8);
+  return interim / 1;
+}
+
+void
+fillSensorList(void)
+{
+  glob_t glbuf;
+  memset(sensor_list, 0, sizeof(int) * 100);
+  if (glob("sensor.0*.status", GLOB_ERR, NULL, &glbuf) == 0) {
+    cout << "Found " << glbuf.gl_pathc << " active sensors" << endl;
+    for (unsigned int i = 0; i < glbuf.gl_pathc; i++) {
+      sensor_list[i] = convertPathToInt(glbuf.gl_pathv[i]);
+    }
+  }
+  globfree(&glbuf);
 }
 
 void roll_log(int sig)
@@ -247,7 +277,7 @@ void
 requestAllConfig(void)
 {
   message_t msg;
-  for (int i = 0; sensor_list[i] != -1; i++) {
+  for (int i = 0; sensor_list[i] > 0 ; i++) {
     queueMessage(sensor_list[i], 'r', msg);
   }
 }
@@ -255,7 +285,7 @@ requestAllConfig(void)
 void
 setAllTime(void)
 {
-  for (int i = 0; sensor_list[i] != -1; i++) {
+  for (int i = 0; sensor_list[i] > 0; i++) {
     set_time(sensor_list[i]);
   }
 }
@@ -298,6 +328,7 @@ int main(int argc, char** argv)
   radio.printDetails();
 
   // Grab the list of sensors and send out requests for config
+  fillSensorList();
   while(1)
   {
     network.update();
