@@ -126,7 +126,7 @@ fillSensorList(void)
   globfree(&glbuf);
 }
 
-void roll_log(int sig)
+void roll_log()
 {
   int outfd;
   outfd = open("netmonitor.log",
@@ -309,16 +309,31 @@ sendPendingMessages(void)
   message_queue.pop();
 }
 
+void handle_signal(int sig)
+{
+  switch (sig) {
+    case SIGHUP:
+      roll_log();
+      break;
+    case SIGUSR1:
+      fillSensorList();
+      requestAllConfig();
+      setAllTime();
+      break;
+  }
+}
+
 int main(int argc, char** argv) 
 {
   bool startup = false;
   struct sigaction newsig;
 
   close(0);
-  roll_log(0);
+  roll_log();
   
-  newsig.sa_handler = roll_log;
+  newsig.sa_handler = handle_signal;
   sigaction(SIGHUP, &newsig, NULL);
+  sigaction(SIGUSR1, &newsig, NULL);
 
   daemon(1, 1);
 
@@ -343,7 +358,7 @@ int main(int argc, char** argv)
     }
     checkRequests();
     sendPendingMessages();
-    delay(10);
+    delay(5);
   }
 
   return 0;
