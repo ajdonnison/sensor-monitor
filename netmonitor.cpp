@@ -66,6 +66,8 @@ set_time(int node)
 void
 set_value_str(int node, string item, int value)
 {
+  message_t status;
+
   if (item == "low_point") {
     set_value(node, 'l', value);
   } else if (item == "high_point") {
@@ -82,6 +84,12 @@ set_value_str(int node, string item, int value)
     set_value(node, 'a', value);
   } else if (item == "time") {
     set_time(node);
+  } else if (item == "status") {
+    queueMessage(node, 's', status);
+  } else if (item == "clock") {
+    queueMessage(node, 't', status);
+  } else if (item == "config") {
+    queueMessage(node, 'r', status);
   }
 }
 
@@ -238,24 +246,38 @@ handleMessage(void)
   }
 }
 
+int
+octal_value(int input)
+{
+  int ptr = 0;
+  int result = 0;
+
+  while (input > 0) {
+    result += (input % 10) << (3 * ptr);
+    input /= 10;
+    ptr++;
+  }
+  return result;
+}
+
 void
 checkForConfig(void)
 {
   struct stat st;
   // Check for an update file
-  if (stat("sensor.cfg", &st) == 0) {
+  if (stat("sensor.ctl", &st) == 0) {
     string line;
     string item;
     SensorConfig scfg;
     int value;
     int node = -1;
-    ifstream fh("sensor.cfg");
+    ifstream fh("sensor.ctl");
     if (fh.is_open()) {
       while (getline(fh, line)) {
 	stringstream _l(line);
 	_l >> item >> value;
 	if (item == "node") {
-	  node = value;
+	  node = octal_value(value);
 	  scfg.load(value);
 	} else {
 	  if (node != -1) {
@@ -269,7 +291,7 @@ checkForConfig(void)
     if (node != -1) {
       scfg.save();
     }
-    unlink("sensor.cfg");
+    unlink("sensor.ctl");
   }
 }
 
@@ -288,6 +310,16 @@ setAllTime(void)
   for (int i = 0; sensor_list[i] > 0; i++) {
     set_time(sensor_list[i]);
   }
+}
+
+void
+requestAllStatus(void)
+{
+ message_t msg;
+ for (int i = 0; sensor_list[i] > 0; i++) {
+  queueMessage(sensor_list[i], 's', msg);
+  queueMessage(sensor_list[i], 't', msg);
+ }
 }
 
 void
@@ -320,6 +352,10 @@ void handle_signal(int sig)
       requestAllConfig();
       setAllTime();
       break;
+    case SIGUSR2:
+      fillSensorList();
+      requestAllStatus();
+      break;
   }
 }
 
@@ -334,6 +370,7 @@ int main(int argc, char** argv)
   newsig.sa_handler = handle_signal;
   sigaction(SIGHUP, &newsig, NULL);
   sigaction(SIGUSR1, &newsig, NULL);
+  sigaction(SIGUSR2, &newsig, NULL);
 
   daemon(1, 1);
 
